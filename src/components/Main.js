@@ -1,9 +1,12 @@
 import React, { Component} from "react";
+import dotenv from 'dotenv';
+
 
 import './Main.css'
 
 import Form from "./Form";
 import Tarefas from "./Tarefas";
+dotenv.config();
 
 
 export default class Main extends Component {
@@ -14,7 +17,8 @@ export default class Main extends Component {
 
          async componentDidMount(){
             try{
-                const response = await fetch('http://localhost:3001/tasks')
+                const apiUrl = process.env.API_URL
+                const response = await fetch(`${apiUrl}/tasks`)
                 
                 if (!response.ok) {
                     throw new Error('Falha ao buscar os dados');
@@ -42,7 +46,8 @@ export default class Main extends Component {
     handleSubmit = async(e) => {
         e.preventDefault()
         let { novaTarefa } = this.state
-        const url = 'http://localhost:3001/tasks'
+        const apiUrl = process.env.API_URL
+        const url = `${apiUrl}/tasks`
         const dados = { tarefas: novaTarefa};
 
         if(!novaTarefa){
@@ -50,7 +55,8 @@ export default class Main extends Component {
         }
 
        try{
-        const task = await fetch(`http://localhost:3001/tasks/${novaTarefa}`, {
+        const apiUrl = process.env.API_URL
+        const task = await fetch(`${apiUrl}/tasks/${novaTarefa}`, {
             method: 'GET', // Método HTTP POST
             headers: {
                 'Content-Type': 'application/json' // Tipo de conteúdo JSON
@@ -85,7 +91,8 @@ export default class Main extends Component {
     handleDelete = async(e,index) => {
        const { tarefas } = this.state
        const deleteTask = tarefas[index]
-       const url = `http://localhost:3001/tasks/${deleteTask}`
+       const apiUrl = process.env.API_URL
+       const url = `${apiUrl}/${deleteTask}`
        try{
         const response = await fetch(url, {
             method: 'DELETE',
