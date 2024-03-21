@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component} from "react";
 
 import './Main.css'
 
@@ -12,24 +12,26 @@ export default class Main extends Component {
             tarefas: [],
         }
 
-        componentDidMount(){
-            const tarefas = JSON.parse(localStorage.getItem('tarefas'));
-
-            if(!tarefas) return;
-
-            this.setState({
-                tarefas : [...tarefas]
-            })
-
-        }
-
-        componentDidUpdate(PrevProps, prevState){
-            const { tarefas } = this.state;
-
-            if(tarefas === prevState.tarefas) return;
-
-            localStorage.setItem('tarefas', JSON.stringify(tarefas))
-        }
+         async componentDidMount(){
+            try{
+                const response = await fetch('http://localhost:3001/tasks')
+                
+                if (!response.ok) {
+                    throw new Error('Falha ao buscar os dados');
+                  }
+                   const jsonData = await response.json();
+                   const tarefas = jsonData.map((tarefa) => {
+                    return tarefa.tarefas
+                   })
+    
+                   this.setState({
+                    tarefas: [...tarefas]
+                 })
+    
+            }catch(e){
+                console.log(e)
+            }
+         }
 
     handleChange = (e) => {
         this.setState({
@@ -37,41 +39,70 @@ export default class Main extends Component {
         })
     }
 
-    handleSubmit = (e) => {
-       e.preventDefault()
-      const { tarefas, index } = this.state
-      let { novaTarefa } = this.state
-      novaTarefa = novaTarefa.trim()
+    handleSubmit = async(e) => {
+        e.preventDefault()
+        let { novaTarefa } = this.state
+        const url = 'http://localhost:3001/tasks'
+        const dados = { tarefas: novaTarefa};
 
-      if(tarefas.indexOf(novaTarefa) !== -1) return
+        if(!novaTarefa){
+            return
+        }
 
-      const novasTarefas = [...tarefas];
-        console.log(index)
-      if(index === -1){
-            this.setState({
-                tarefas: [...novasTarefas, novaTarefa],
-                novaTarefa: ''
-            })
-        }else{
-            novasTarefas[index] = novaTarefa
+       try{
+        const task = await fetch(`http://localhost:3001/tasks/${novaTarefa}`, {
+            method: 'GET', // Método HTTP POST
+            headers: {
+                'Content-Type': 'application/json' // Tipo de conteúdo JSON
+            },
+        })
 
-            this.setState({
-                tarefas : [...novasTarefas],
-                index: -1,
-            })
-        }   
+        const taskJson = await task.json()
+        if(taskJson.ok){
+            return;
+        }
+        const response = await fetch(url, {
+            method: 'POST', // Método HTTP POST
+            headers: {
+                'Content-Type': 'application/json' // Tipo de conteúdo JSON
+            },
+            body: JSON.stringify(dados) // Dados convertidos para JSON
+        })
 
+        if (!response.ok) {
+            throw new Error('Falha ao enviar os dados');
+        }
+        this.setState({
+            novaTarefa: ''
+           })
+       this.componentDidMount()
+       
+       }catch(e){
+        console.log(e)
+       }
     }
 
-    handleDelete = (e, index) => {
-        e.preventDefault();
-        const { tarefas } = this.state
-        const novasTarefas = [...tarefas]
-        novasTarefas.splice(index, 1)
-        
-        this.setState({
-           tarefas: [...novasTarefas]
+    handleDelete = async(e,index) => {
+       const { tarefas } = this.state
+       const deleteTask = tarefas[index]
+       const url = `http://localhost:3001/tasks/${deleteTask}`
+       try{
+        const response = await fetch(url, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
         })
+
+        if (!response.ok) {
+            throw new Error('Falha ao enviar os dados');
+        }
+
+       this.componentDidMount()
+
+       }catch(e){
+        console.log('Erro:', e)
+       }
     }
 
     handleEdit = (e, index) => {
